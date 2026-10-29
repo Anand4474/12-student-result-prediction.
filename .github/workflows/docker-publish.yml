@@ -1,0 +1,39 @@
+name: Build, Test and Publish Docker Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/anand4474/student-result-prediction
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t $IMAGE:latest .
+
+      - name: Health test
+        run: |
+          docker run -d --name api -p 8000:8000 $IMAGE:latest
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8000/health; then echo; break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:8000/health
+          curl -sf http://localhost:8000/metrics | grep student_api_model_loaded
+          docker rm -f api
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: docker push $IMAGE:latest

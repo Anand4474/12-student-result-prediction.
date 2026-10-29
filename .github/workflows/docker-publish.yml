@@ -33,7 +33,7 @@ jobs:
           docker rm -f api
 
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u Anand4474 --password-stdin
 
       - name: Push image
         run: docker push $IMAGE:latest
